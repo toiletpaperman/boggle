@@ -1,1 +1,5 @@
-get all possible words in "boggle" the words search game where you look for words in a grid
+#BOGGLE WORD SEARCH GAME
+
+instantly get all combinations of possible words given the grid
+
+I have learned a ton from this project, things like graphs and trees and recursion
