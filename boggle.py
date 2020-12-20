@@ -24,8 +24,8 @@ class Node:
     def print_children(self):
         return [i.data for i in self.children]
 
+    #returns surrounding letters of certain position and converts them to nodes
     def get_surrounding_nodes(self):
-
         if self.y == 0 and self.x == 0:
             surrounding = [[1, 0], [1, 1], [0, 1]]
         elif self.y == 0 and self.x == len(grid)-1:
@@ -69,8 +69,32 @@ class Graph:
         for i in self.nodes:
             for j in i.get_surrounding_nodes():
                 j.add_child(i)
-            print(f'{i.data} --->  {i.print_children()}')
+
+    def has_key(self, key):
+        if key in self.nodes:
+            return True
+        return False
+
+    def find_all_paths(self, start, end, path=[]):
+        path = path + [start]
+
+        if start == end:
+            return [path]
+        if not self.has_key(start):
+            return []
+
+        paths = []
+        for node in start.get_surrounding_nodes():
+            if node not in path:
+                newpaths = self.find_all_paths(node, end, path)
+                for newpath in newpaths:
+                    paths.append(newpath)
+        return paths
+
+    def all_combinations(self):
+        for i in range(len(self.nodes)):
+            for j in range(1, len(self.nodes)):
+                print(self.find_all_paths(self.nodes[i], self.nodes[j]))
 
 boggle = Graph(grid)
-
-
+boggle.all_combinations()
