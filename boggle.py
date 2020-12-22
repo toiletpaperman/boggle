@@ -5,7 +5,7 @@ wordcheck = enchant.Dict('en_US')
 grid = [
      ['p', 's', 'a', 'a'],
     ['a', 'p', 'w', 'i'],
-    ['p', 'o', 'e', 'b'],
+    ['p', 'o', 'e', 's'],
     ['a', 't', 't', 'p']
 ]
 
@@ -21,28 +21,52 @@ class Node:
         self.children.append(child)
         child.children.append(self)
 
-    def print_children(self):
-        return [i.data for i in self.children]
+    def print_children(self, isData=True):
+        if isData:
+            return [i.data for i in self.children]
+        else:
+            return [i for i in self.children]
+
+    def has_pos(self, pos):
+        if self.x == pos[1] and self.y == pos[0]:
+            return True
+        return False
+
+
+class Graph:
+    def __init__(self):
+        self.nodes = []
+        for y in range(len(grid)):
+            for x in range(len(grid)):
+                self.nodes.append(Node(grid[y][x], [y, x]))
+        for i in self.nodes:
+            for j in self.get_surrounding_nodes(i):
+                j.add_child(i)
+
+    def has_key(self, key):
+        if key in self.nodes:
+            return True
+        return False
 
     #returns surrounding letters of certain position and converts them to nodes
-    def get_surrounding_nodes(self):
-        if self.y == 0 and self.x == 0:
+    def get_surrounding_nodes(self, node):
+        if node.y == 0 and node.x == 0:
             surrounding = [[1, 0], [1, 1], [0, 1]]
-        elif self.y == 0 and self.x == len(grid)-1:
+        elif node.y == 0 and node.x == len(grid)-1:
             surrounding = [[1, 0], [1, -1], [0, -1]]
-        elif self.y == len(grid)-1 and self.x == 0:
+        elif node.y == len(grid)-1 and node.x == 0:
             surrounding = [[-1, 0], [-1, 1], [0, 1]]
-        elif self.y == len(grid)-1 and self.x == len(grid)-1:
+        elif node.y == len(grid)-1 and node.x == len(grid)-1:
             surrounding = [[-1, 0], [-1, -1], [0, -1]]
        #EDGES
 
-        elif self.y == len(grid)-1:
+        elif node.y == len(grid)-1:
             surrounding = [[-1, 0], [0, 1], [0, -1], [-1, 1], [-1,-1]]
-        elif self.x == len(grid)-1:
+        elif node.x == len(grid)-1:
             surrounding = [[1, 0], [-1, 0], [0, -1], [1, -1], [-1,-1]]
-        elif self.y == 0:
+        elif node.y == 0:
             surrounding = [[1, 0], [0, 1], [0, -1], [1, 1], [1,-1]]
-        elif self.x == 0:
+        elif node.x == 0:
             surrounding = [[1, 0], [-1, 0], [0, 1], [1, 1], [-1, 1]]
 
         else:
@@ -53,48 +77,36 @@ class Node:
         for i in range(len(surrounding)):
             y = surrounding[i][0]
             x = surrounding[i][1]
-            letter = grid[y+self.y][x+self.x]
-            final.append(Node(letter, [y+self.y, x+self.x]))
-
+            for node in self.nodes:
+                if node.has_pos([y, x]):
+                    final.append(node)
         return final
 
 
-class Graph:
-    def __init__(self, grid):
-        self.grid = grid
-        self.nodes = []
-        for y in range(len(self.grid)):
-            for x in range(len(self.grid)):
-                self.nodes.append(Node(grid[y][x], [y, x]))
-        for i in self.nodes:
-            for j in i.get_surrounding_nodes():
-                j.add_child(i)
-
-    def has_key(self, key):
-        if key in self.nodes:
-            return True
-        return False
-
-    def find_all_paths(self, start, end, path=[]):
+    def find_paths(self, start, end, path=[]):
         path = path + [start]
-
         if start == end:
             return [path]
-        if not self.has_key(start):
+        if start not in self.nodes:
             return []
-
         paths = []
-        for node in start.get_surrounding_nodes():
+        for node in start.children:
             if node not in path:
-                newpaths = self.find_all_paths(node, end, path)
-                for newpath in newpaths:
-                    paths.append(newpath)
+                newpath = self.find_paths(node, end, path)
+                for p in newpath:
+                    paths.append(p)
         return paths
 
     def all_combinations(self):
+        paths = []
         for i in range(len(self.nodes)):
-            for j in range(1, len(self.nodes)):
-                print(self.find_all_paths(self.nodes[i], self.nodes[j]))
+            for j in range(i, len(self.nodes)):
+                paths.append(self.find_paths(self.nodes[i], self.nodes[j]))
+        return paths
 
-boggle = Graph(grid)
-boggle.all_combinations()
+
+boggle = Graph()
+
+for i in boggle.find_paths(boggle.nodes[0], boggle.nodes[1]):
+    for j in i:
+        print(''.join(j.data))
