@@ -3,10 +3,10 @@ import enchant
 wordcheck = enchant.Dict('en_US')
 
 grid = [
-     ['p', 's', 'a', 'a'],
-    ['a', 'p', 'w', 'i'],
-    ['p', 'o', 'e', 's'],
-    ['a', 't', 't', 'p']
+     ['f', 's', 'b', 'e'],
+    ['d', 'l', 'o', 'b'],
+    ['a', 'i', 'e', 'o'],
+    ['y', 'l', 'm', 'o']
 ]
 
 
@@ -100,13 +100,19 @@ class Graph:
     def all_combinations(self):
         paths = []
         for i in range(len(self.nodes)):
-            for j in range(i, len(self.nodes)):
-                paths.append(self.find_paths(self.nodes[i], self.nodes[j]))
+            for j in range(len(self.nodes)):
+                paths = paths + self.find_paths(self.nodes[i], self.nodes[j])
         return paths
 
+    def print_nodes(self):
+        pass
 
 boggle = Graph()
 
-for i in boggle.find_paths(boggle.nodes[0], boggle.nodes[1]):
-    for j in i:
-        print(''.join(j.data))
+wordlist = set()
+
+for i in boggle.all_combinations():
+      word = ''.join(j.data for j in i)
+      if len(word) > 2 and wordcheck.check(word):
+          wordlist.add(word)
+print(wordlist)
