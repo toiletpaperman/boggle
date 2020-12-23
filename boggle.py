@@ -1,4 +1,5 @@
 import enchant
+import time
 
 wordcheck = enchant.Dict('en_US')
 
@@ -19,16 +20,12 @@ class Node:
 
     def add_child(self, child):
         self.children.append(child)
-        child.children.append(self)
 
-    def print_children(self, isData=True):
-        if isData:
-            return [i.data for i in self.children]
-        else:
-            return [i for i in self.children]
+    def print_children(self):
+        return [i.data for i in self.children]
 
-    def has_pos(self, pos):
-        if self.x == pos[1] and self.y == pos[0]:
+    def has_pos(self, y, x):
+        if self.x == x and self.y == y:
             return True
         return False
 
@@ -42,11 +39,6 @@ class Graph:
         for i in self.nodes:
             for j in self.get_surrounding_nodes(i):
                 j.add_child(i)
-
-    def has_key(self, key):
-        if key in self.nodes:
-            return True
-        return False
 
     #returns surrounding letters of certain position and converts them to nodes
     def get_surrounding_nodes(self, node):
@@ -70,17 +62,18 @@ class Graph:
             surrounding = [[1, 0], [-1, 0], [0, 1], [1, 1], [-1, 1]]
 
         else:
-            surrounding = [[1, 0], [-1, 0], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]
-
+            surrounding = [[1, 0], [-1, 0], [0, -1], [0, 1], [1, 1], [-1, -1], [1, -1], [-1, 1]]
         final = list()
 
-        for i in range(len(surrounding)):
-            y = surrounding[i][0]
-            x = surrounding[i][1]
-            for node in self.nodes:
-                if node.has_pos([y, x]):
-                    final.append(node)
+        for i in surrounding:
+            absolute_x = i[1] + node.x
+            absolute_y = i[0] + node.y
+            for j in self.nodes:
+                if j.has_pos(absolute_y, absolute_x):
+                    final.append(j)
+                    break
         return final
+
 
 
     def find_paths(self, start, end, path=[]):
@@ -100,19 +93,28 @@ class Graph:
     def all_combinations(self):
         paths = []
         for i in range(len(self.nodes)):
-            for j in range(len(self.nodes)):
+            for j in range(i, len(self.nodes)):
                 paths = paths + self.find_paths(self.nodes[i], self.nodes[j])
         return paths
 
     def print_nodes(self):
-        pass
+        for i in self.nodes:
+            print(i.data, i.print_children())
 
+time1 = time.time()
 boggle = Graph()
+
+
+node1 = boggle.nodes[4]
+node2 = boggle.nodes[12]
 
 wordlist = set()
 
 for i in boggle.all_combinations():
-      word = ''.join(j.data for j in i)
-      if len(word) > 2 and wordcheck.check(word):
-          wordlist.add(word)
+    word = ''.join([j.data for j in i])
+    if len(word) > 2 and wordcheck.check(word):
+        wordlist.add(word)
+
+
 print(wordlist)
+print(time.time() - time1)
