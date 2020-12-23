@@ -1,13 +1,15 @@
 import enchant
 import time
+import concurrent.futures
+import multiprocessing
 
 wordcheck = enchant.Dict('en_US')
 
 grid = [
-     ['f', 's', 'b', 'e'],
-    ['d', 'l', 'o', 'b'],
-    ['a', 'i', 'e', 'o'],
-    ['y', 'l', 'm', 'o']
+     ['o', 'o', 's', 'f'],
+    ['o', 's', 'l', 'b'],
+    ['n', 'l', 'o', 't'],
+    ['l', 'qu', 'i', 'r']
 ]
 
 
@@ -92,29 +94,46 @@ class Graph:
 
     def all_combinations(self):
         paths = []
-        for i in range(len(self.nodes)):
-            for j in range(i, len(self.nodes)):
-                paths = paths + self.find_paths(self.nodes[i], self.nodes[j])
+        processes = []
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            for i in range(len(self.nodes)):
+                for j in range(i+1, len(self.nodes)):
+                    process = executor.submit(self.find_paths, self.nodes[i], self.nodes[j])
+                    processes.append(process)
+            for f in concurrent.futures.as_completed(processes):
+                paths = paths + f.result()
+
         return paths
 
-    def print_nodes(self):
-        for i in self.nodes:
-            print(i.data, i.print_children())
+
+def split_list(alist, parts):
+    length = len(alist)
+    return [ alist[i*length // parts: (i+1)*length // parts] for i in range(parts)]
+
+def check_list(alist):
+    words = []
+    for i in alist:
+        if wordcheck.check(i) and len(i) > 2 and i not in words:
+            words.append(i)
+
+    return words
+
+
 
 time1 = time.time()
 boggle = Graph()
 
+wordlist = []
 
-node1 = boggle.nodes[4]
-node2 = boggle.nodes[12]
+with concurrent.futures.ProcessPoolExecutor() as executor:
+    for li in split_list(boggle.all_combinations(), multiprocessing.cpu_count()):
+        process = executor.submit(check_list, li)
+        wordlist.append(process)
 
-wordlist = set()
-
-for i in boggle.all_combinations():
-    word = ''.join([j.data for j in i])
-    if len(word) > 2 and wordcheck.check(word):
-        wordlist.add(word)
+    for f in concurrent.futures.as_completed(wordlist):
+        print(f.result())
 
 
-print(wordlist)
-print(time.time() - time1)
+
+seconds = time.time() - time1
+print('it took ' + str(seconds//60) + ' minutes')
