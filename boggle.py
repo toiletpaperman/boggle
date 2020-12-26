@@ -90,6 +90,7 @@ class Graph:
                 newpath = self.find_paths(node, end, path)
                 for p in newpath:
                     paths.append(p)
+        print('paths found:', start.data, 'to', end.data)
         return paths
 
     def all_combinations(self):
@@ -100,9 +101,13 @@ class Graph:
                 for j in range(i+1, len(self.nodes)):
                     process = executor.submit(self.find_paths, self.nodes[i], self.nodes[j])
                     processes.append(process)
-            for f in concurrent.futures.as_completed(processes):
-                paths = paths + f.result()
 
+        for f in concurrent.futures.as_completed(processes):
+            print('process completed')
+            for path in f.result():
+                word = ''.join([j.data for j in path])
+                if word not in paths:
+                    paths.append(word)
         return paths
 
 
@@ -115,25 +120,33 @@ def check_list(alist):
     for i in alist:
         if wordcheck.check(i) and len(i) > 2 and i not in words:
             words.append(i)
-
-    return words
-
-
-
-time1 = time.time()
-boggle = Graph()
-
-wordlist = []
-
-with concurrent.futures.ProcessPoolExecutor() as executor:
-    for li in split_list(boggle.all_combinations(), multiprocessing.cpu_count()):
-        process = executor.submit(check_list, li)
-        wordlist.append(process)
-
-    for f in concurrent.futures.as_completed(wordlist):
-        print(f.result())
+            print(i)
 
 
 
-seconds = time.time() - time1
-print('it took ' + str(seconds//60) + ' minutes')
+if __name__ == '__main__':
+
+    start = time.perf_counter()
+
+    boggle = Graph()
+
+    list_count  = 4
+    processes = []
+    
+    print('all combinations')
+    all_possible = boggle.all_combinations()
+    print('done')
+
+    print('starting checking processes')
+    for sublist in split_list(all_possible, list_count):
+        process = multiprocessing.Process(target=check_list, args=(sublist,))
+        process.start()
+        processes.append(process)
+
+    print('checking processes started')
+    for i in processes:
+        i.join()
+    print("Done")
+
+    finish = time.perf_counter()
+    print('minutes: ', round((finish-start)/60, 2))
